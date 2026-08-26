@@ -604,6 +604,27 @@ function AyatPilihanCard({
             </div>
           </div>
 
+          {data.pilihanIndex !== '' && (
+            <div className="bg-orange-50/50 border border-orange-100 rounded-xl p-4 max-h-48 overflow-y-auto space-y-4 hide-scrollbar">
+              {(() => {
+                const opt = AYAT_PILIHAN_OPTIONS[Number(data.pilihanIndex)];
+                const minAyat = data.ayatMulai || opt.min;
+                const maxAyat = data.ayatSelesai || opt.max;
+                
+                return opt.verses
+                  .filter(v => v.number >= minAyat && v.number <= maxAyat)
+                  .map(v => (
+                    <div key={v.number} className="space-y-2 pb-3 border-b border-orange-200/50 last:border-0 last:pb-0">
+                      <p className="text-right text-xl leading-[2.5] text-gray-800" dir="rtl" style={{ fontFamily: '"KFGQPC Uthmanic Script HAFS", "Traditional Arabic", serif' }}>
+                        {v.arabic} <span className="text-orange-500 font-sans text-sm font-bold ml-1">({v.number})</span>
+                      </p>
+                      <p className="text-xs text-gray-600 text-justify">{v.translation}</p>
+                    </div>
+                  ));
+              })()}
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-1">
               <Star size={16} className="text-emas" /> Predikat
