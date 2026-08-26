@@ -11,7 +11,7 @@ export default function LaporanPekananPage() {
   const [selectedSantriId, setSelectedSantriId] = useState('')
   
   const [laporan, setLaporan] = useState({
-    tanggal_laporan: new Date().toISOString().split('T')[0],
+    tanggal_laporan: new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0],
     kehadiran_persen: 100,
     predikat_adab: 'Jayyid Jiddan',
     komentar_guru: '',

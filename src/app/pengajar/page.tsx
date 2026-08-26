@@ -33,7 +33,7 @@ export default function PengajarDashboard() {
       setPengajarData(pData)
 
       if (pData) {
-        const today = new Date().toISOString().split('T')[0]
+        const today = new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0]
 
         // 3. Ambil statistik
         const [resSantri, resSetoran, resMutabaah] = await Promise.all([

@@ -17,7 +17,7 @@ export default function EditSetoranModal({ enabled, setEnabled, setoranData, san
   const [loading, setLoading] = useState(false)
   
   const [jenisSetoran, setJenisSetoran] = useState('hafalan_baru')
-  const [tanggalSetoran, setTanggalSetoran] = useState(new Date().toISOString().split('T')[0])
+  const [tanggalSetoran, setTanggalSetoran] = useState(new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0])
   const [surat, setSurat] = useState('')
   const [ayatMulai, setAyatMulai] = useState(1)
   const [ayatSelesai, setAyatSelesai] = useState(1)
@@ -26,7 +26,7 @@ export default function EditSetoranModal({ enabled, setEnabled, setoranData, san
   useEffect(() => {
     if (setoranData) {
       setJenisSetoran(setoranData.jenis_setoran)
-      setTanggalSetoran(setoranData.tanggal_setoran || new Date().toISOString().split('T')[0])
+      setTanggalSetoran(setoranData.tanggal_setoran || new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0])
       setSurat(setoranData.surat)
       setAyatMulai(setoranData.ayat_mulai)
       setAyatSelesai(setoranData.ayat_selesai)

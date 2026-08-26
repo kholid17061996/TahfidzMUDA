@@ -1134,7 +1134,7 @@ export default function SetoranUnifiedPage() {
   const [masterQuran, setMasterQuran] = useState<MasterQuran[]>([])
   const [riwayatHarian, setRiwayatHarian] = useState<any[]>([])
 
-  const [tanggal, setTanggal] = useState(new Date().toISOString().split('T')[0])
+  const [tanggal, setTanggal] = useState(new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0])
   const [santriId, setSantriId] = useState('')
   const [kehadiran, setKehadiran] = useState('Hadir')
 

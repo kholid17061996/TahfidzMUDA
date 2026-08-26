@@ -11,7 +11,7 @@ export default function RiwayatInputPage() {
   const [santriList, setSantriList] = useState<any[]>([])
   const [mutabaahData, setMutabaahData] = useState<any[]>([])
   const [setoranData, setSetoranData] = useState<any[]>([])
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
+  const [selectedDate, setSelectedDate] = useState(new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0])
   const [searchQuery, setSearchQuery] = useState('')
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [selectedMutabaah, setSelectedMutabaah] = useState<any>(null)

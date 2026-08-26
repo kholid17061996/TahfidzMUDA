@@ -107,7 +107,7 @@ export default function DataSantriPage() {
       setNama('')
       setKelasId('')
       setPengajarId('')
-      setTanggalMasuk(new Date().toISOString().split('T')[0])
+      setTanggalMasuk(new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0])
       setStatus('aktif')
       setIsTahsin(false)
       setOrtuId('')
@@ -303,7 +303,7 @@ export default function DataSantriPage() {
             nama: nama,
             kelas_id: assignedKelasId,
             pengajar_id: assignedPengajarId,
-            tanggal_masuk: new Date().toISOString().split('T')[0],
+            tanggal_masuk: new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0],
             status: status.toString().toLowerCase()
           }
 

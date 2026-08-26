@@ -24,7 +24,7 @@ export const revalidate = 0; // Disable caching to always show live stats
 export default async function AdminDashboard() {
   const supabaseAdmin = getAdminClient()
 
-  const today = new Date().toISOString().split('T')[0]
+  const today = new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0]
 
   const [resSantri, resPengajar, resSetoran] = await Promise.all([
     supabaseAdmin.from('santri').select('id', { count: 'exact', head: true }),
