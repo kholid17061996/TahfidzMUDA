@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/utils/supabase/client'
-import { CheckSquare, Target, Users, BookOpen, Loader2 } from 'lucide-react'
+import { CheckSquare, Target, Users, BookOpen, Loader2, UserCircle } from 'lucide-react'
 import Link from 'next/link'
 
 export default function PengajarDashboard() {
@@ -67,19 +67,28 @@ export default function PengajarDashboard() {
         {/* Glow accent */}
         <div className="absolute -top-10 -right-10 w-48 h-48 bg-teal-400/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-emas/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="relative z-10">
-          <p className="text-teal-300 text-sm font-semibold uppercase tracking-widest mb-1">Selamat Datang</p>
-          <h1 className="text-3xl font-bold mb-2 drop-shadow">Ahlan wa Sahlan, {profile?.full_name || 'Ustaz/Ustazah'} 👋</h1>
-          <p className="text-white/70 max-w-xl leading-relaxed">
-            Semoga Allah memberkahi waktu Anda dalam membersamai para penghafal Al-Qur'an.
-          </p>
-          {pengajarData && (
-            <div className="mt-6 inline-flex gap-4 bg-black/20 backdrop-blur-sm border border-white/10 px-5 py-2.5 rounded-2xl text-sm">
-              <span className="text-white/80"><strong className="text-white">Kode:</strong> {pengajarData.kode_pengajar}</span>
-              <span className="text-white/30">|</span>
-              <span className="text-white/80"><strong className="text-white">Kelas:</strong> {pengajarData.kelas || 'Belum diatur'}</span>
-            </div>
-          )}
+        <div className="relative z-10 flex flex-col md:flex-row gap-6 items-start md:items-center">
+          <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white/20 shadow-xl shrink-0 bg-white/10 flex items-center justify-center">
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt="Profil" className="w-full h-full object-cover" />
+            ) : (
+              <UserCircle size={48} className="text-white/50" />
+            )}
+          </div>
+          <div>
+            <p className="text-teal-300 text-sm font-semibold uppercase tracking-widest mb-1">Selamat Datang</p>
+            <h1 className="text-3xl font-bold mb-2 drop-shadow">Ahlan wa Sahlan, {profile?.full_name || 'Ustaz/Ustazah'} 👋</h1>
+            <p className="text-white/70 max-w-xl leading-relaxed">
+              Semoga Allah memberkahi waktu Anda dalam membersamai para penghafal Al-Qur'an.
+            </p>
+            {pengajarData && (
+              <div className="mt-6 inline-flex gap-4 bg-black/20 backdrop-blur-sm border border-white/10 px-5 py-2.5 rounded-2xl text-sm">
+                <span className="text-white/80"><strong className="text-white">Kode:</strong> {pengajarData.kode_pengajar}</span>
+                <span className="text-white/30">|</span>
+                <span className="text-white/80"><strong className="text-white">Kelas:</strong> {pengajarData.kelas || 'Belum diatur'}</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -116,32 +125,7 @@ export default function PengajarDashboard() {
         </div>
       </div>
 
-      {/* Quick Links — Glassmorphism */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-2">
-        <Link href="/pengajar/mutabaah" className="group relative overflow-hidden bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 p-8 shadow-[0_4px_20px_rgba(0,0,0,0.15)] hover:bg-white/15 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(0,0,0,0.2)]">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-teal-400/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:bg-teal-400/20 transition-all duration-500" />
-          <div className="relative z-10">
-            <div className="w-14 h-14 bg-teal-400/20 border border-teal-300/30 text-teal-300 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 group-hover:bg-teal-400/30 transition-all duration-300">
-              <CheckSquare size={28} />
-            </div>
-            <h3 className="text-xl font-bold text-white mb-2">Mutaba'ah Harian</h3>
-            <p className="text-white/60 text-sm leading-relaxed">Input data kehadiran, kedisiplinan, dan laporan amalan yaumi santri setiap harinya.</p>
-            <span className="mt-4 inline-flex items-center gap-1 text-teal-300 text-xs font-bold uppercase tracking-widest group-hover:gap-2 transition-all">Buka → </span>
-          </div>
-        </Link>
-        
-        <Link href="/pengajar/setoran" className="group relative overflow-hidden bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 p-8 shadow-[0_4px_20px_rgba(0,0,0,0.15)] hover:bg-white/15 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(0,0,0,0.2)]">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-emas/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:bg-emas/20 transition-all duration-500" />
-          <div className="relative z-10">
-            <div className="w-14 h-14 bg-emas/20 border border-emas/30 text-emas rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 group-hover:bg-emas/30 transition-all duration-300">
-              <BookOpen size={28} />
-            </div>
-            <h3 className="text-xl font-bold text-white mb-2">Input Setoran Hafalan</h3>
-            <p className="text-white/60 text-sm leading-relaxed">Catat capaian target, hafalan baru (ziyadah), dan kelancaran murojaah santri.</p>
-            <span className="mt-4 inline-flex items-center gap-1 text-emas text-xs font-bold uppercase tracking-widest group-hover:gap-2 transition-all">Buka → </span>
-          </div>
-        </Link>
-      </div>
+
     </div>
   )
 }

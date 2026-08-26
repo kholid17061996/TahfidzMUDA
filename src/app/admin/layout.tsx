@@ -62,8 +62,8 @@ export default function AdminLayout({
       `}>
         <div className={`flex items-center h-20 border-b border-white/10 bg-white/5 transition-all duration-300 ${sidebarOpen ? 'justify-between px-6 min-w-[18rem]' : 'justify-center w-20'}`}>
           <div className={`flex items-center gap-3 ${sidebarOpen ? '' : 'justify-center'}`}>
-            <div className="w-10 h-10 bg-gradient-to-br from-emas to-yellow-600 rounded-xl flex items-center justify-center text-slate shadow-lg shadow-emas/30 shrink-0">
-              <BookOpen size={24} />
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 overflow-hidden bg-white/10 p-1">
+              <img src="https://i.ibb.co.com/Xrg7MyTH/Chat-GPT-Image-Aug-26-2026-09-05-14-AM.png" alt="Logo" className="w-full h-full object-contain" />
             </div>
             <span className={`text-xl font-bold text-white tracking-wide ${sidebarOpen ? 'block' : 'hidden'}`}>Admin Panel</span>
           </div>
@@ -126,7 +126,10 @@ export default function AdminLayout({
             >
               {!sidebarOpen && <Menu size={24} />}
             </button>
-            <div>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg overflow-hidden bg-white/10 p-1 flex items-center justify-center">
+                <img src="https://i.ibb.co.com/Xrg7MyTH/Chat-GPT-Image-Aug-26-2026-09-05-14-AM.png" alt="Logo" className="w-full h-full object-contain" />
+              </div>
               <h2 className="text-xl font-bold text-white tracking-wide">Mutaba'ah <span className="text-emas font-light">Admin</span></h2>
             </div>
           </div>

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/utils/supabase/client'
 import BackgroundEffects from '@/components/BackgroundEffects'
+import ProfileSettingsModal from '@/components/ProfileSettingsModal'
 import { 
   BookOpen, 
   LayoutDashboard, 
@@ -15,7 +16,8 @@ import {
   X,
   UserCircle,
   Settings,
-  ChevronDown
+  ChevronDown,
+  ClipboardList
 } from 'lucide-react'
 
 export default function PengajarLayout({
@@ -25,8 +27,21 @@ export default function PengajarLayout({
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const [profile, setProfile] = useState<any>(null)
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: prof } = await supabase.from('profiles').select('full_name, avatar_url, id').eq('id', user.id).single()
+        if (prof) setProfile(prof)
+      }
+    }
+    fetchProfile()
+  }, [])
 
   // Auto-hide sidebar setelah 5 detik
   useEffect(() => {
@@ -41,6 +56,7 @@ export default function PengajarLayout({
     { name: 'Input Mutaba\'ah Harian', href: '/pengajar/mutabaah', icon: CheckSquare },
     { name: 'Target Hafalan', href: '/pengajar/target', icon: Target },
     { name: 'Laporan Pekanan', href: '/pengajar/laporan', icon: BookOpen },
+    { name: 'Riwayat Input', href: '/pengajar/riwayat', icon: ClipboardList },
   ]
 
   const handleLogout = async () => {
@@ -60,8 +76,8 @@ export default function PengajarLayout({
       `}>
         <div className={`flex items-center h-20 border-b border-white/10 bg-white/5 transition-all duration-300 ${sidebarOpen ? 'justify-between px-6 min-w-[18rem]' : 'justify-center w-20'}`}>
           <div className={`flex items-center gap-3 ${sidebarOpen ? '' : 'justify-center'}`}>
-            <div className="w-10 h-10 bg-gradient-to-br from-teal-300 to-teal-600 rounded-xl flex items-center justify-center text-slate shadow-lg shadow-teal-500/30 shrink-0">
-              <BookOpen size={24} />
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 overflow-hidden bg-white/10 p-1">
+              <img src="https://i.ibb.co.com/Xrg7MyTH/Chat-GPT-Image-Aug-26-2026-09-05-14-AM.png" alt="Logo" className="w-full h-full object-contain" />
             </div>
             <span className={`text-xl font-bold text-white tracking-wide ${sidebarOpen ? 'block' : 'hidden'}`}>Panel Pengajar</span>
           </div>
@@ -124,7 +140,10 @@ export default function PengajarLayout({
             >
               {!sidebarOpen && <Menu size={24} />}
             </button>
-            <div>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg overflow-hidden bg-white/10 p-1 flex items-center justify-center">
+                <img src="https://i.ibb.co.com/Xrg7MyTH/Chat-GPT-Image-Aug-26-2026-09-05-14-AM.png" alt="Logo" className="w-full h-full object-contain" />
+              </div>
               <h2 className="text-xl font-bold text-white tracking-wide">Mutaba'ah <span className="text-teal-300 font-light">Tahfidz</span></h2>
             </div>
           </div>
@@ -134,11 +153,15 @@ export default function PengajarLayout({
               onClick={() => setProfileMenuOpen(!profileMenuOpen)}
               className="flex items-center gap-4 hover:bg-white/10 p-2 pr-4 rounded-full transition-all border border-transparent hover:border-white/20"
             >
-              <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 shadow-inner">
-                <UserCircle size={24} className="text-white" />
+              <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 shadow-inner overflow-hidden">
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="Profil" className="w-full h-full object-cover" />
+                ) : (
+                  <UserCircle size={24} className="text-white" />
+                )}
               </div>
               <div className="hidden md:block text-right">
-                <p className="text-sm font-bold text-white leading-tight">Ustaz / Ustazah</p>
+                <p className="text-sm font-bold text-white leading-tight">{profile?.full_name || 'Ustaz / Ustazah'}</p>
                 <p className="text-xs text-teal-200">Mode Pengajar</p>
               </div>
               <ChevronDown size={16} className={`text-white/70 transition-transform ${profileMenuOpen ? 'rotate-180' : ''}`} />
@@ -160,7 +183,7 @@ export default function PengajarLayout({
                     <button 
                       onClick={() => {
                         setProfileMenuOpen(false)
-                        alert("Fitur Pengaturan Profil akan segera hadir!")
+                        setSettingsModalOpen(true)
                       }}
                       className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/80 hover:bg-white/10 hover:text-white transition-colors text-sm font-medium"
                     >
@@ -199,6 +222,7 @@ export default function PengajarLayout({
           if (shortName === 'Input Mutaba\'ah Harian') shortName = 'Mutaba\'ah'
           if (shortName === 'Target Hafalan') shortName = 'Target'
           if (shortName === 'Laporan Pekanan') shortName = 'Laporan'
+          if (shortName === 'Riwayat Input') shortName = 'Riwayat'
           
           return (
             <Link
@@ -218,6 +242,13 @@ export default function PengajarLayout({
           )
         })}
       </nav>
+
+      <ProfileSettingsModal 
+        enabled={settingsModalOpen} 
+        setEnabled={setSettingsModalOpen} 
+        profile={profile} 
+        onProfileUpdated={(updated) => setProfile(updated)} 
+      />
     </div>
   )
 }
