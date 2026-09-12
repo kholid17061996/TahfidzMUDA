@@ -25,7 +25,7 @@ export default function Home() {
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [santriNames, setSantriNames] = useState<string[]>([])
   const [userEmails, setUserEmails] = useState<string[]>([])
-  const [pengajarList, setPengajarList] = useState<{id: string, nama: string, email: string}[]>([])
+  const [pengajarList, setPengajarList] = useState<{id: string, nama: string, email?: string}[]>([])
   const [pengajarNames, setPengajarNames] = useState<string[]>([])
   const [selectedPengajarName, setSelectedPengajarName] = useState('')
   
