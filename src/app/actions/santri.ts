@@ -154,3 +154,53 @@ export async function getAllUserEmailsAction() {
     return { error: 'Terjadi kesalahan sistem.' }
   }
 }
+
+export async function getAllSantriForPengujiAction() {
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!serviceRoleKey) {
+    return { error: 'Kunci konfigurasi SUPABASE_SERVICE_ROLE_KEY belum disetel.' }
+  }
+
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    serviceRoleKey,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  )
+
+  try {
+    const [resSantri, resKelas] = await Promise.all([
+      supabaseAdmin
+        .from('santri')
+        .select('id, nama, kelas_id, kelas(nama), materi_ujian')
+        .eq('status', 'aktif')
+        .order('nama', { ascending: true }),
+      supabaseAdmin
+        .from('kelas')
+        .select('id, nama')
+        .eq('status', 'aktif')
+        .order('nama', { ascending: true })
+    ])
+
+    if (resSantri.error) {
+      return { error: 'Gagal mengambil data santri: ' + resSantri.error.message }
+    }
+    
+    if (resKelas.error) {
+      return { error: 'Gagal mengambil data kelas: ' + resKelas.error.message }
+    }
+
+    return { 
+      data: {
+        santri: resSantri.data,
+        kelas: resKelas.data
+      } 
+    }
+  } catch (err: any) {
+    return { error: 'Terjadi kesalahan sistem.' }
+  }
+}

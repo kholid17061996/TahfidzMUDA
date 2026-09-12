@@ -8,6 +8,7 @@ interface AutocompleteInputProps {
   options: string[]
   placeholder?: string
   className?: string
+  disabled?: boolean
 }
 
 export default function AutocompleteInput({
@@ -15,7 +16,8 @@ export default function AutocompleteInput({
   onChange,
   options,
   placeholder = '',
-  className = ''
+  className = '',
+  disabled = false
 }: AutocompleteInputProps) {
   const [suggestion, setSuggestion] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
@@ -74,12 +76,13 @@ export default function AutocompleteInput({
         ref={inputRef}
         type="text"
         required
+        disabled={disabled}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}
         onBlur={handleBlur}
         placeholder={placeholder}
-        className={`relative z-10 w-full px-5 py-3.5 bg-transparent border border-transparent focus:border-emas focus:ring-2 focus:ring-emas rounded-2xl outline-none transition-all placeholder:text-gray-400 font-bold text-left ${className}`}
+        className={`relative z-10 w-full px-5 py-3.5 bg-transparent border border-transparent focus:border-emas focus:ring-2 focus:ring-emas rounded-2xl outline-none transition-all placeholder:text-gray-400 font-bold text-left disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
       />
     </div>
   )

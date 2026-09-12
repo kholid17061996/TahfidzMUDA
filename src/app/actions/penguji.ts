@@ -24,7 +24,7 @@ export async function getAllPengujiForLoginAction() {
   try {
     const { data, error } = await supabaseAdmin
       .from('penguji')
-      .select('id, nama')
+      .select('id, nama, tipe_penguji')
       .eq('status', 'aktif')
       .order('nama', { ascending: true })
       
@@ -50,12 +50,12 @@ export async function getPengujiAction() {
   }
 }
 
-export async function createPengujiAction(nama: string, kode_penguji: string) {
+export async function createPengujiAction(nama: string, kode_penguji: string, tipe_penguji: string) {
   const supabaseAdmin = getAdminClient()
   try {
     const { data, error } = await supabaseAdmin
       .from('penguji')
-      .insert({ nama, kode_penguji })
+      .insert({ nama, kode_penguji, tipe_penguji })
       
     if (error) return { error: error.message }
     return { success: true }
@@ -64,12 +64,12 @@ export async function createPengujiAction(nama: string, kode_penguji: string) {
   }
 }
 
-export async function updatePengujiAction(id: string, nama: string, kode_penguji: string, status: string) {
+export async function updatePengujiAction(id: string, nama: string, kode_penguji: string, status: string, tipe_penguji: string) {
   const supabaseAdmin = getAdminClient()
   try {
     const { data, error } = await supabaseAdmin
       .from('penguji')
-      .update({ nama, kode_penguji, status, updated_at: new Date().toISOString() })
+      .update({ nama, kode_penguji, status, tipe_penguji, updated_at: new Date().toISOString() })
       .eq('id', id)
       
     if (error) return { error: error.message }

@@ -9,6 +9,7 @@ type Penguji = {
   nama: string
   kode_penguji: string
   status: string
+  tipe_penguji: string
 }
 
 export default function DataPengujiPage() {
@@ -25,6 +26,7 @@ export default function DataPengujiPage() {
   const [nama, setNama] = useState('')
   const [kodePenguji, setKodePenguji] = useState('')
   const [status, setStatus] = useState('aktif')
+  const [tipePenguji, setTipePenguji] = useState('Bacaan')
   
   useEffect(() => {
     fetchData()
@@ -43,11 +45,13 @@ export default function DataPengujiPage() {
       setNama(penguji.nama)
       setKodePenguji(penguji.kode_penguji)
       setStatus(penguji.status)
+      setTipePenguji(penguji.tipe_penguji || 'Bacaan')
     } else {
       setEditId(null)
       setNama('')
       setKodePenguji(`PGJ-${Math.floor(1000 + Math.random() * 9000)}`)
       setStatus('aktif')
+      setTipePenguji('Bacaan')
     }
     setIsModalOpen(true)
   }
@@ -62,9 +66,9 @@ export default function DataPengujiPage() {
 
     try {
       if (editId) {
-        await updatePengujiAction(editId, nama, kodePenguji, status)
+        await updatePengujiAction(editId, nama, kodePenguji, status, tipePenguji)
       } else {
-        await createPengujiAction(nama, kodePenguji)
+        await createPengujiAction(nama, kodePenguji, tipePenguji)
       }
       await fetchData()
       handleCloseModal()
@@ -129,6 +133,7 @@ export default function DataPengujiPage() {
                 <th className="p-4 font-semibold text-sm w-16 text-center">No</th>
                 <th className="p-4 font-semibold text-sm">Nama Lengkap</th>
                 <th className="p-4 font-semibold text-sm w-32">Kode</th>
+                <th className="p-4 font-semibold text-sm w-32 text-center">Tipe</th>
                 <th className="p-4 font-semibold text-sm w-32 text-center">Status</th>
                 <th className="p-4 font-semibold text-sm w-32 text-center">Aksi</th>
               </tr>
@@ -153,6 +158,11 @@ export default function DataPengujiPage() {
                     <td className="p-4 text-center text-gray-400">{index + 1}</td>
                     <td className="p-4 font-medium text-white">{item.nama}</td>
                     <td className="p-4"><span className="bg-white/10 text-gray-300 px-3 py-1 rounded-lg text-sm">{item.kode_penguji}</span></td>
+                    <td className="p-4 text-center">
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-500/20 text-blue-400`}>
+                        {item.tipe_penguji || 'Bacaan'}
+                      </span>
+                    </td>
                     <td className="p-4 text-center">
                       <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${item.status === 'aktif' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
                         {item.status}
@@ -202,6 +212,14 @@ export default function DataPengujiPage() {
                     <option value="nonaktif">Nonaktif</option>
                   </select>
                 </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-slate ml-1">Tipe Penguji</label>
+                <select value={tipePenguji} onChange={(e) => setTipePenguji(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:ring-2 focus:ring-emas focus:border-emas outline-none transition-all text-slate">
+                  <option value="Bacaan">Penguji Bacaan</option>
+                  <option value="Tahfidz">Penguji Tahfidz</option>
+                </select>
               </div>
 
               <div className="flex gap-3 pt-4">

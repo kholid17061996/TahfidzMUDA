@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { ArrowLeft, Save, Loader2, Calculator } from 'lucide-react'
 import BackgroundEffects from '@/components/BackgroundEffects'
 import AutocompleteInput from '@/components/AutocompleteInput'
-import { getAllSantriNamesAction } from '@/app/actions/santri'
+import { getAllSantriForPengujiAction } from '@/app/actions/santri'
 import { createUjianBacaanAction } from '@/app/actions/ujian_bacaan'
 
 export default function FormUjianBacaan() {
@@ -14,10 +14,12 @@ export default function FormUjianBacaan() {
   const [penguji, setPenguji] = useState<{id: string, nama: string} | null>(null)
   
   const [santriList, setSantriList] = useState<any[]>([])
+  const [kelasList, setKelasList] = useState<{id: string, nama: string}[]>([])
   const [santriNames, setSantriNames] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   
   // Form State
+  const [selectedKelasId, setSelectedKelasId] = useState('')
   const [selectedSantriName, setSelectedSantriName] = useState('')
   const [tanggal, setTanggal] = useState(new Date().toISOString().split('T')[0])
   const [suratAyat, setSuratAyat] = useState('')
@@ -41,14 +43,33 @@ export default function FormUjianBacaan() {
     }
     setPenguji(JSON.parse(sessionStr))
     
-    // Load Santri
-    getAllSantriNamesAction().then(res => {
+    // Load Santri & Kelas
+    getAllSantriForPengujiAction().then(res => {
       if (res.data) {
-        setSantriList(res.data)
-        setSantriNames(res.data.map((s: any) => s.nama))
+        setKelasList(res.data.kelas)
+        setSantriList(res.data.santri)
       }
     })
   }, [router])
+
+  useEffect(() => {
+    if (selectedKelasId) {
+      const filtered = santriList.filter(s => s.kelas_id === selectedKelasId)
+      setSantriNames(filtered.map(s => s.nama))
+    } else {
+      setSantriNames([])
+    }
+    setSelectedSantriName('')
+  }, [selectedKelasId, santriList])
+
+  useEffect(() => {
+    if (selectedSantriName && selectedKelasId) {
+      const foundSantri = santriList.find(s => s.nama === selectedSantriName && s.kelas_id === selectedKelasId)
+      if (foundSantri && foundSantri.materi_ujian) {
+        setSuratAyat(foundSantri.materi_ujian)
+      }
+    }
+  }, [selectedSantriName, selectedKelasId, santriList])
 
   // Kalkulasi Otomatis
   const { nilaiAkhir, predikat } = useMemo(() => {
@@ -76,9 +97,9 @@ export default function FormUjianBacaan() {
     e.preventDefault()
     if (!penguji) return
     
-    const foundSantri = santriList.find(s => s.nama === selectedSantriName)
+    const foundSantri = santriList.find(s => s.nama === selectedSantriName && s.kelas_id === selectedKelasId)
     if (!foundSantri) {
-      alert('Nama Santri tidak valid. Silakan pilih dari daftar.')
+      alert('Nama Santri tidak valid. Silakan pilih dari daftar setelah memilih kelas.')
       return
     }
     
@@ -139,12 +160,26 @@ export default function FormUjianBacaan() {
               <h3 className="text-lg font-bold text-white mb-4 border-l-4 border-emas pl-3">A. Identitas Peserta</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1">
+                  <label className="text-sm text-gray-300">Pilih Kelas</label>
+                  <select 
+                    value={selectedKelasId} 
+                    onChange={(e) => setSelectedKelasId(e.target.value)} 
+                    className="w-full bg-white/5 text-white p-3 rounded-xl border border-white/10 outline-none focus:border-emas focus:ring-1 focus:ring-emas"
+                  >
+                    <option value="" className="text-slate">-- Pilih Kelas --</option>
+                    {kelasList.map(k => (
+                      <option key={k.id} value={k.id} className="text-slate">{k.nama}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1">
                   <label className="text-sm text-gray-300">Nama Santri</label>
                   <AutocompleteInput
                     value={selectedSantriName}
                     onChange={setSelectedSantriName}
                     options={santriNames}
-                    placeholder="Ketik/Pilih Nama Santri"
+                    disabled={!selectedKelasId}
+                    placeholder={selectedKelasId ? "Ketik/Pilih Nama Santri" : "Pilih Kelas Terlebih Dahulu"}
                     className="w-full text-slate"
                   />
                 </div>
@@ -157,8 +192,9 @@ export default function FormUjianBacaan() {
                   <input type="date" required value={tanggal} onChange={(e) => setTanggal(e.target.value)} className="w-full bg-white/5 text-white p-3 rounded-xl border border-white/10 outline-none focus:border-emas focus:ring-1 focus:ring-emas" />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-sm text-gray-300">Surat / Ayat</label>
+                  <label className="text-sm text-gray-300">Materi Ujian (Surat / Ayat)</label>
                   <input type="text" required placeholder="Cth: Al-Baqarah 1-10" value={suratAyat} onChange={(e) => setSuratAyat(e.target.value)} className="w-full bg-white/5 text-white p-3 rounded-xl border border-white/10 outline-none focus:border-emas focus:ring-1 focus:ring-emas" />
+                  <p className="text-xs text-gray-400 mt-1">Otomatis terisi jika sudah diatur oleh Admin.</p>
                 </div>
               </div>
             </div>

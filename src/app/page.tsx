@@ -25,7 +25,7 @@ export default function Home() {
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [santriNames, setSantriNames] = useState<string[]>([])
   const [userEmails, setUserEmails] = useState<string[]>([])
-  const [pengajarList, setPengajarList] = useState<{id: string, nama: string, email?: string}[]>([])
+  const [pengajarList, setPengajarList] = useState<{id: string, nama: string, email?: string, tipe_penguji?: string}[]>([])
   const [pengajarNames, setPengajarNames] = useState<string[]>([])
   const [selectedPengajarName, setSelectedPengajarName] = useState('')
   
@@ -75,7 +75,8 @@ export default function Home() {
       setIsExiting(true)
       localStorage.setItem('penguji_session', JSON.stringify({
         id: found.id,
-        nama: found.nama
+        nama: found.nama,
+        tipe_penguji: found.tipe_penguji || 'Bacaan'
       }))
       
       setTimeout(() => {

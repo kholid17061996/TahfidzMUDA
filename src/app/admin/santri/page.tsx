@@ -19,6 +19,7 @@ type Santri = {
   kelas: { nama: string }
   pengajar: { nama: string }
   is_tahsin?: boolean
+  materi_ujian?: string
 }
 
 type Kelas = { id: string, nama: string }
@@ -52,6 +53,7 @@ export default function DataSantriPage() {
   const [tanggalMasuk, setTanggalMasuk] = useState('')
   const [status, setStatus] = useState('aktif')
   const [isTahsin, setIsTahsin] = useState(false)
+  const [materiUjian, setMateriUjian] = useState('')
   
   // Hubungan Ortu state (hanya untuk create perdana)
   const [ortuId, setOrtuId] = useState('')
@@ -99,6 +101,7 @@ export default function DataSantriPage() {
       setTanggalMasuk(santri.tanggal_masuk || '')
       setStatus(santri.status)
       setIsTahsin(!!santri.is_tahsin)
+      setMateriUjian(santri.materi_ujian || '')
       setOrtuId('')
     } else {
       setEditId(null)
@@ -110,6 +113,7 @@ export default function DataSantriPage() {
       setTanggalMasuk(new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0])
       setStatus('aktif')
       setIsTahsin(false)
+      setMateriUjian('')
       setOrtuId('')
       setHubunganOrtu('Ayah')
     }
@@ -133,7 +137,8 @@ export default function DataSantriPage() {
       pengajar_id: pengajarId || null,
       tanggal_masuk: tanggalMasuk || null,
       status,
-      is_tahsin: isTahsin
+      is_tahsin: isTahsin,
+      materi_ujian: materiUjian || null
     }
 
     if (editId) {
@@ -191,7 +196,8 @@ export default function DataSantriPage() {
         { header: 'Nama Siswa', key: 'nama', width: 25 },
         { header: 'Kelas', key: 'kelas', width: 20 },
         { header: 'Pengajar / Musyrif', key: 'pengajar', width: 25 },
-        { header: 'Status', key: 'status', width: 15 }
+        { header: 'Status', key: 'status', width: 15 },
+        { header: 'Materi Ujian', key: 'materi_ujian', width: 30 }
       ]
 
       // Header styling
@@ -203,7 +209,8 @@ export default function DataSantriPage() {
         nama: 'Ahmad Abdullah',
         kelas: kelasList[0]?.nama || 'Kelas Abu Bakar',
         pengajar: pengajarList[0]?.nama || 'Ustaz Fulan',
-        status: 'aktif'
+        status: 'aktif',
+        materi_ujian: 'Al-Baqarah 1-10'
       })
 
       // Prepare dropdown lists
@@ -282,6 +289,7 @@ export default function DataSantriPage() {
           const kelas = row['Kelas'] || row.kelas || row.nama_kelas
           const pengajar = row['Pengajar / Musyrif'] || row.pengajar
           const status = row['Status'] || row.status || 'aktif'
+          const materiUjian = row['Materi Ujian'] || row.materi_ujian || null
 
           // Find class ID if provided
           let assignedKelasId = null
@@ -304,7 +312,8 @@ export default function DataSantriPage() {
             kelas_id: assignedKelasId,
             pengajar_id: assignedPengajarId,
             tanggal_masuk: new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0],
-            status: status.toString().toLowerCase()
+            status: status.toString().toLowerCase(),
+            materi_ujian: materiUjian ? materiUjian.toString() : null
           }
 
           const { error } = await supabase.from('santri').insert([payload])
@@ -612,6 +621,18 @@ export default function DataSantriPage() {
                       ))}
                     </select>
                   </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Materi Ujian (Opsional)</label>
+                  <input 
+                    type="text" 
+                    value={materiUjian}
+                    onChange={(e) => setMateriUjian(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emas focus:border-emas outline-none"
+                    placeholder="Contoh: Al-Baqarah 1-50, atau Juz 30..."
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Materi yang akan muncul otomatis saat Penguji menilai siswa ini.</p>
                 </div>
               </div>
 
