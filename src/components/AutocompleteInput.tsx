@@ -27,7 +27,7 @@ export default function AutocompleteInput({
     }
 
     const lowerValue = value.toLowerCase()
-    const match = options.find(opt => opt.toLowerCase().startsWith(lowerValue))
+    const match = options.find(opt => opt && typeof opt === 'string' && opt.toLowerCase().startsWith(lowerValue))
     
     if (match) {
       // Keep the user's typed case for the matched part, and use the option's original case for the rest

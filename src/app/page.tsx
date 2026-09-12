@@ -5,11 +5,12 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/utils/supabase/client'
 import AutocompleteInput from '@/components/AutocompleteInput'
 import { searchSantriAction, getAllSantriNamesAction, getAllUserEmailsAction } from '@/app/actions/santri'
-import { Loader2, Globe, Shield, Users, UserCheck } from 'lucide-react'
+import { getAllPengujiForLoginAction } from '@/app/actions/penguji'
+import { Loader2, Globe, Shield, Users, UserCheck, BookOpen } from 'lucide-react'
 import BackgroundEffects from '@/components/BackgroundEffects'
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'admin' | 'ortu'>('admin')
+  const [activeTab, setActiveTab] = useState<'admin' | 'ortu' | 'penguji'>('admin')
   
   // App initialization state
   const [isLoaded, setIsLoaded] = useState(false)
@@ -24,6 +25,9 @@ export default function Home() {
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [santriNames, setSantriNames] = useState<string[]>([])
   const [userEmails, setUserEmails] = useState<string[]>([])
+  const [pengajarList, setPengajarList] = useState<{id: string, nama: string, email: string}[]>([])
+  const [pengajarNames, setPengajarNames] = useState<string[]>([])
+  const [selectedPengajarName, setSelectedPengajarName] = useState('')
   
   const router = useRouter()
 
@@ -42,14 +46,43 @@ export default function Home() {
     getAllUserEmailsAction().then(res => {
       if (res.data) setUserEmails(res.data)
     })
+    
+    // Fetch penguji list for login
+    getAllPengujiForLoginAction().then(res => {
+      if (res.data) {
+        setPengajarList(res.data)
+        setPengajarNames(res.data.map(p => p.nama))
+      }
+    })
 
     return () => clearTimeout(timer)
   }, [])
 
-  const handleAdminLogin = async (e: React.FormEvent) => {
+  const handleStaffLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
+
+    if (activeTab === 'penguji') {
+      const found = pengajarList.find(p => p.nama === selectedPengajarName)
+      if (!found) {
+         setError('Nama Penguji tidak valid.')
+         setLoading(false)
+         return
+      }
+      
+      // Passwordless login: simpan session di localStorage
+      setIsExiting(true)
+      localStorage.setItem('penguji_session', JSON.stringify({
+        id: found.id,
+        nama: found.nama
+      }))
+      
+      setTimeout(() => {
+        window.location.href = '/penguji'
+      }, 800)
+      return
+    }
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -149,76 +182,113 @@ export default function Home() {
           </div>
 
           {/* Role Toggle */}
-          <div className="flex bg-white/20 p-1.5 rounded-2xl mb-8 backdrop-blur-md border border-white/30">
+          <div className="flex bg-white/20 p-1.5 rounded-2xl mb-8 backdrop-blur-md border border-white/30 gap-1 overflow-x-auto">
             <button
               onClick={() => setActiveTab('admin')}
-              className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-300 ${
+              className={`flex-1 py-2 px-2 rounded-xl text-[11px] sm:text-xs font-semibold flex items-center justify-center gap-1.5 transition-all duration-300 ${
                 activeTab === 'admin' 
                   ? 'bg-white/80 text-slate shadow-md backdrop-blur-xl' 
                   : 'text-gray-700 hover:bg-white/10 hover:text-gray-900'
               }`}
             >
-              <Shield size={16} />
-              Admin dan Asatidzah
+              <Shield size={14} className="shrink-0" />
+              <span className="whitespace-nowrap">Admin</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('penguji')}
+              className={`flex-1 py-2 px-2 rounded-xl text-[11px] sm:text-xs font-semibold flex items-center justify-center gap-1.5 transition-all duration-300 ${
+                activeTab === 'penguji' 
+                  ? 'bg-white/80 text-slate shadow-md backdrop-blur-xl' 
+                  : 'text-gray-700 hover:bg-white/10 hover:text-gray-900'
+              }`}
+            >
+              <BookOpen size={14} className="shrink-0" />
+              <span className="whitespace-nowrap">Penguji</span>
             </button>
             <button
               onClick={() => setActiveTab('ortu')}
-              className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-300 ${
+              className={`flex-1 py-2 px-2 rounded-xl text-[11px] sm:text-xs font-semibold flex items-center justify-center gap-1.5 transition-all duration-300 ${
                 activeTab === 'ortu' 
                   ? 'bg-white/80 text-slate shadow-md backdrop-blur-xl' 
                   : 'text-gray-700 hover:bg-white/10 hover:text-gray-900'
               }`}
             >
-              <Users size={16} />
-              Wali Siswa
+              <Users size={14} className="shrink-0" />
+              <span className="whitespace-nowrap">Wali Siswa</span>
             </button>
           </div>
 
           {/* Forms */}
-          {activeTab === 'admin' ? (
-            <form onSubmit={handleAdminLogin} className="space-y-5 animate-in fade-in duration-300">
+          {(activeTab === 'admin' || activeTab === 'penguji') ? (
+            <form onSubmit={handleStaffLogin} className="space-y-5 animate-in fade-in duration-300">
               {error && (
                 <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm border border-red-100 text-center">
                   {error}
                 </div>
               )}
               
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-slate ml-1">Email</label>
-                <AutocompleteInput
-                  value={email}
-                  onChange={setEmail}
-                  options={userEmails}
-                  placeholder="admin@example.com"
-                  className="w-full text-slate"
-                />
-              </div>
+              {activeTab === 'admin' ? (
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-slate ml-1">Email</label>
+                  <AutocompleteInput
+                    value={email}
+                    onChange={setEmail}
+                    options={userEmails}
+                    placeholder="admin@example.com"
+                    className="w-full text-slate"
+                  />
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-slate ml-1">Pilih Nama Penguji</label>
+                  <div className="relative">
+                    <select
+                      value={selectedPengajarName}
+                      onChange={(e) => setSelectedPengajarName(e.target.value)}
+                      className="w-full px-5 py-3.5 rounded-2xl bg-gray-50 border border-gray-200 focus:bg-white focus:ring-2 focus:ring-emas focus:border-emas outline-none transition-all text-slate appearance-none cursor-pointer"
+                      required
+                    >
+                      <option value="" disabled>-- Pilih Penguji --</option>
+                      {pengajarNames.map((nama) => (
+                        <option key={nama} value={nama}>{nama}</option>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                  </div>
+                </div>
+              )}
               
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-slate ml-1">Password</label>
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-5 py-3.5 rounded-2xl bg-gray-50 border border-gray-200 focus:bg-white focus:ring-2 focus:ring-emas focus:border-emas outline-none transition-all placeholder:text-gray-400"
-                  placeholder="••••••••"
-                />
-              </div>
+              {activeTab === 'admin' && (
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-slate ml-1">Password</label>
+                  <input
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full px-5 py-3.5 rounded-2xl bg-gray-50 border border-gray-200 focus:bg-white focus:ring-2 focus:ring-emas focus:border-emas outline-none transition-all placeholder:text-gray-400"
+                    placeholder="••••••••"
+                  />
+                </div>
+              )}
 
-              <div className="flex items-center justify-between px-1 pt-1">
-                <label className="flex items-center gap-2 cursor-pointer group">
-                  <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-slate focus:ring-slate cursor-pointer" />
-                  <span className="text-sm font-medium text-slate/80 group-hover:text-slate transition-colors">Remember me</span>
-                </label>
-              </div>
+              {activeTab === 'admin' && (
+                <div className="flex items-center justify-between px-1 pt-1">
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-slate focus:ring-slate cursor-pointer" />
+                    <span className="text-sm font-medium text-slate/80 group-hover:text-slate transition-colors">Remember me</span>
+                  </label>
+                </div>
+              )}
 
               <button
                 type="submit"
                 disabled={loading}
                 className="w-full bg-emas hover:bg-emasHover text-slate font-bold py-4 rounded-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 mt-6 shadow-[0_4px_14px_0_rgba(248,210,28,0.39)]"
               >
-                {loading ? <Loader2 className="animate-spin" size={20} /> : 'Login'}
+                {loading ? <Loader2 className="animate-spin" size={20} /> : (activeTab === 'penguji' ? 'Masuk sebagai Penguji' : 'Login')}
               </button>
             </form>
           ) : (
