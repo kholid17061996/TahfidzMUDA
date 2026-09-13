@@ -415,10 +415,12 @@ export async function distribusiUjianTahfidzAction(namaPengajarDikecualikan: str
     for (const [pengujiId, daftarSantriId] of Object.entries(hasilDistribusi)) {
       if (daftarSantriId.length === 0) continue
       updates.push(
-        supabaseAdmin
-          .from('santri')
-          .update({ penguji_ujian_tahfidz_id: pengujiId })
-          .in('id', daftarSantriId)
+        Promise.resolve(
+          supabaseAdmin
+            .from('santri')
+            .update({ penguji_ujian_tahfidz_id: pengujiId })
+            .in('id', daftarSantriId)
+        )
       )
     }
 
