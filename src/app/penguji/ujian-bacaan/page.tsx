@@ -148,7 +148,7 @@ export default function FormUjianBacaan() {
           Kembali ke Dashboard
         </Link>
         
-        <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 md:p-10 shadow-2xl">
+        <div className="bg-white/20 backdrop-blur-xl border border-white/30 rounded-3xl p-6 md:p-10 shadow-2xl">
           <div className="text-center mb-10 pb-6 border-b border-white/10">
             <h1 className="text-3xl font-bold text-white mb-2">Form Penilaian</h1>
             <h2 className="text-xl text-emas font-semibold">Ujian Baca Al-Qur'an</h2>
@@ -156,7 +156,7 @@ export default function FormUjianBacaan() {
 
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Bagian A: Identitas */}
-            <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+            <div className="bg-white/10 rounded-2xl p-6 border border-white/20">
               <h3 className="text-lg font-bold text-white mb-4 border-l-4 border-emas pl-3">A. Identitas Peserta</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1">
@@ -191,8 +191,8 @@ export default function FormUjianBacaan() {
                   <label className="text-sm text-gray-300">Hari/Tanggal</label>
                   <input type="date" required value={tanggal} onChange={(e) => setTanggal(e.target.value)} className="w-full bg-white/5 text-white p-3 rounded-xl border border-white/10 outline-none focus:border-emas focus:ring-1 focus:ring-emas" />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-sm text-gray-300">Materi Ujian (Surat / Ayat)</label>
+                <div className="space-y-1 md:col-span-2">
+                  <label className="text-sm text-gray-300">Materi Ujian Bacaan</label>
                   <input type="text" required placeholder="Cth: Al-Baqarah 1-10" value={suratAyat} onChange={(e) => setSuratAyat(e.target.value)} className="w-full bg-white/5 text-white p-3 rounded-xl border border-white/10 outline-none focus:border-emas focus:ring-1 focus:ring-emas" />
                   <p className="text-xs text-gray-400 mt-1">Otomatis terisi jika sudah diatur oleh Admin.</p>
                 </div>
@@ -201,7 +201,7 @@ export default function FormUjianBacaan() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Bagian B: Aspek Penilaian */}
-              <div className="lg:col-span-2 bg-white/5 rounded-2xl p-6 border border-white/10">
+              <div className="lg:col-span-2 bg-white/10 rounded-2xl p-6 border border-white/20">
                 <h3 className="text-lg font-bold text-white mb-4 border-l-4 border-emas pl-3 flex justify-between">
                   <span>B. Aspek Penilaian</span>
                   <span className="text-xs font-normal text-gray-400 bg-black/20 px-3 py-1 rounded-full">Skala 1 - 100</span>
@@ -252,7 +252,7 @@ export default function FormUjianBacaan() {
                   </div>
                 </div>
 
-                <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+                <div className="bg-white/10 rounded-2xl p-6 border border-white/20">
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <label className="text-sm font-bold text-white block">Status Hasil Akhir</label>
