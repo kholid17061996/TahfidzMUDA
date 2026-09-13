@@ -962,16 +962,29 @@ export default function DataSantriPage() {
                   </div>
                 </div>
                 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Materi Ujian Bacaan (Opsional)</label>
-                  <input 
-                    type="text" 
-                    value={materiUjian}
-                    onChange={(e) => setMateriUjian(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emas focus:border-emas outline-none"
-                    placeholder="Contoh: Al-Baqarah 1-50, atau Juz 30..."
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Materi yang akan muncul otomatis saat Penguji menilai siswa ini.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Materi Ujian Bacaan (Opsional)</label>
+                    <input 
+                      type="text" 
+                      value={materiUjian}
+                      onChange={(e) => setMateriUjian(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emas focus:border-emas outline-none"
+                      placeholder="Contoh: Jilid 1, atau Al-Baqarah 1-50..."
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Materi untuk ujian bacaan.</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Materi Ujian Tahfidz (Opsional)</label>
+                    <input 
+                      type="text" 
+                      value={materiUjianTahfidz}
+                      onChange={(e) => setMateriUjianTahfidz(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emas focus:border-emas outline-none"
+                      placeholder="Contoh: Juz 30, atau Al-Mulk..."
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Materi untuk ujian tahfidz.</p>
+                  </div>
                 </div>
               </div>
 
