@@ -26,6 +26,7 @@ export async function getAllPengujiForLoginAction() {
       .from('penguji')
       .select('id, nama, tipe_penguji')
       .eq('status', 'aktif')
+      .neq('nama', 'Siti Aisyah')
       .order('nama', { ascending: true })
       
     if (error) return { error: error.message }
