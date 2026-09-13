@@ -19,63 +19,61 @@ const getAdminClient = () => {
   )
 }
 
-export type UjianBacaanPayload = {
+export type UjianTahfidzPayload = {
   santri_id: string
   penguji_id: string
   tanggal: string
-  surat_ayat: string
-  nilai_makharijul: number
-  nilai_tajwid: number
+  materi_tahfidz: string
   nilai_kelancaran: number
-  nilai_fashahah: number
-  nilai_mad: number
-  nilai_waqaf: number
+  nilai_ketepatan: number
+  nilai_tajwid: number
+  nilai_murojaah: number
+  nilai_adab: number
   nilai_akhir: number
   predikat: string
   status_kelulusan: string
   catatan_penguji: string
 }
 
-export async function createUjianBacaanAction(payload: UjianBacaanPayload) {
+export async function createUjianTahfidzAction(payload: UjianTahfidzPayload) {
   const supabaseAdmin = getAdminClient()
   try {
-      const { data, error } = await supabaseAdmin
-        .from('ujian_bacaan')
-        .insert(payload)
-        
-      if (error) return { error: error.message }
+    const { data, error } = await supabaseAdmin
+      .from('ujian_tahfidz')
+      .insert(payload)
+      
+    if (error) return { error: error.message }
 
-      // Update santri agar tidak muncul lagi di form ujian bacaan
-      const { error: updateError } = await supabaseAdmin
-        .from('santri')
-        .update({ can_ujian_bacaan: false })
-        .eq('id', payload.santri_id)
+    // Update santri agar tidak muncul lagi di form ujian tahfidz
+    const { error: updateError } = await supabaseAdmin
+      .from('santri')
+      .update({ can_ujian_tahfidz: false })
+      .eq('id', payload.santri_id)
 
-      if (updateError) {
-        console.error('Gagal update status can_ujian_bacaan santri:', updateError)
-      }
+    if (updateError) {
+      console.error('Gagal update status can_ujian_tahfidz santri:', updateError)
+    }
 
-      return { success: true }
-    } catch (err: any) {
+    return { success: true }
+  } catch (err: any) {
     return { error: err.message }
   }
 }
 
-export async function getUjianBacaanByPengujiAction(penguji_id: string) {
+export async function getUjianTahfidzByPengujiAction(penguji_id: string) {
   const supabaseAdmin = getAdminClient()
   try {
     const { data, error } = await supabaseAdmin
-      .from('ujian_bacaan')
+      .from('ujian_tahfidz')
       .select(`
         id,
         tanggal,
-        surat_ayat,
-        nilai_makharijul,
-        nilai_tajwid,
+        materi_tahfidz,
         nilai_kelancaran,
-        nilai_fashahah,
-        nilai_mad,
-        nilai_waqaf,
+        nilai_ketepatan,
+        nilai_tajwid,
+        nilai_murojaah,
+        nilai_adab,
         nilai_akhir,
         predikat,
         status_kelulusan,
@@ -92,11 +90,11 @@ export async function getUjianBacaanByPengujiAction(penguji_id: string) {
   }
 }
 
-export async function updateUjianBacaanAction(id: string, payload: Partial<UjianBacaanPayload>) {
+export async function updateUjianTahfidzAction(id: string, payload: Partial<UjianTahfidzPayload>) {
   const supabaseAdmin = getAdminClient()
   try {
     const { error } = await supabaseAdmin
-      .from('ujian_bacaan')
+      .from('ujian_tahfidz')
       .update(payload)
       .eq('id', id)
     if (error) return { error: error.message }
@@ -106,19 +104,19 @@ export async function updateUjianBacaanAction(id: string, payload: Partial<Ujian
   }
 }
 
-export async function deleteUjianBacaanAction(id: string, santriId: string) {
+export async function deleteUjianTahfidzAction(id: string, santriId: string) {
   const supabaseAdmin = getAdminClient()
   try {
     const { error } = await supabaseAdmin
-      .from('ujian_bacaan')
+      .from('ujian_tahfidz')
       .delete()
       .eq('id', id)
     if (error) return { error: error.message }
 
-    // Reset can_ujian_bacaan agar santri bisa diuji kembali
+    // Reset can_ujian_tahfidz agar santri bisa diuji kembali
     await supabaseAdmin
       .from('santri')
-      .update({ can_ujian_bacaan: true })
+      .update({ can_ujian_tahfidz: true })
       .eq('id', santriId)
 
     return { success: true }
@@ -126,4 +124,3 @@ export async function deleteUjianBacaanAction(id: string, santriId: string) {
     return { error: err.message }
   }
 }
-

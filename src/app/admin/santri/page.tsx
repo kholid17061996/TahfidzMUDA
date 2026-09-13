@@ -5,23 +5,24 @@ import { supabase } from '@/utils/supabase/client'
 import { Plus, Edit2, Trash2, Search, Loader2, Users, FileUp, Download, ArrowUpDown, RotateCcw } from 'lucide-react'
 import * as XLSX from 'xlsx'
 
-import { allowRetestBacaanAction } from '@/app/actions/santri'
+import { allowRetestBacaanAction, allowRetestTahfidzAction, distribusiUjianTahfidzAction, resetDistribusiUjianTahfidzAction } from '@/app/actions/santri'
 
 // Types based on schema
 type Santri = {
   id: string
   kode_santri: string
-  nis: string
+  nis?: string
   nama: string
   kelas_id: string
   pengajar_id: string
-  tanggal_masuk: string
+  tanggal_masuk?: string
   created_at?: string
   status: string
-  kelas: { nama: string }
-  pengajar: { nama: string }
+  kelas?: { nama: string }
+  pengajar?: { nama: string }
   is_tahsin?: boolean
   materi_ujian?: string
+  materi_ujian_tahfidz?: string
 }
 
 type Kelas = { id: string, nama: string }
@@ -41,7 +42,11 @@ export default function DataSantriPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const fileInputMateriRef = useRef<HTMLInputElement>(null)
-  const [isUploadingMateri, setIsUploadingMateri] = useState(false)  
+  const fileInputMateriTahfidzRef = useRef<HTMLInputElement>(null)
+  const [isUploadingMateri, setIsUploadingMateri] = useState(false)
+  const [isUploadingMateriTahfidz, setIsUploadingMateriTahfidz] = useState(false)
+  const [isDistributing, setIsDistributing] = useState(false)
+  const [isResetting, setIsResetting] = useState(false)  
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -57,6 +62,7 @@ export default function DataSantriPage() {
   const [status, setStatus] = useState('aktif')
   const [isTahsin, setIsTahsin] = useState(false)
   const [materiUjian, setMateriUjian] = useState('')
+  const [materiUjianTahfidz, setMateriUjianTahfidz] = useState('')
   
   // Hubungan Ortu state (hanya untuk create perdana)
   const [ortuId, setOrtuId] = useState('')
@@ -105,6 +111,7 @@ export default function DataSantriPage() {
       setStatus(santri.status)
       setIsTahsin(!!santri.is_tahsin)
       setMateriUjian(santri.materi_ujian || '')
+      setMateriUjianTahfidz(santri.materi_ujian_tahfidz || '')
       setOrtuId('')
     } else {
       setEditId(null)
@@ -117,6 +124,7 @@ export default function DataSantriPage() {
       setStatus('aktif')
       setIsTahsin(false)
       setMateriUjian('')
+      setMateriUjianTahfidz('')
       setOrtuId('')
       setHubunganOrtu('Ayah')
     }
@@ -141,7 +149,8 @@ export default function DataSantriPage() {
       tanggal_masuk: tanggalMasuk || null,
       status,
       is_tahsin: isTahsin,
-      materi_ujian: materiUjian || null
+      materi_ujian: materiUjian || null,
+      materi_ujian_tahfidz: materiUjianTahfidz || null
     }
 
     if (editId) {
@@ -197,6 +206,18 @@ export default function DataSantriPage() {
     }
   }
 
+  const handleResetUjianTahfidz = async (id: string, namaSantri: string) => {
+    if (confirm(`Apakah Anda yakin ingin mereset ujian tahfidz untuk ${namaSantri}? Siswa ini akan kembali muncul di daftar Penguji Tahfidz.`)) {
+      const res = await allowRetestTahfidzAction(id)
+      if (res.error) {
+        alert(res.error)
+      } else {
+        alert('Berhasil direset! Siswa sekarang bisa diuji tahfidz kembali.')
+        fetchData()
+      }
+    }
+  }
+
   const handleDownloadTemplate = async () => {
     try {
       const ExcelJS = (await import('exceljs')).default
@@ -212,7 +233,8 @@ export default function DataSantriPage() {
         { header: 'Kelas', key: 'kelas', width: 20 },
         { header: 'Pengajar / Musyrif', key: 'pengajar', width: 25 },
         { header: 'Status', key: 'status', width: 15 },
-        { header: 'Materi Ujian Bacaan', key: 'materi_ujian', width: 30 }
+        { header: 'Materi Ujian Bacaan', key: 'materi_ujian', width: 30 },
+        { header: 'Materi Ujian Tahfidz', key: 'materi_ujian_tahfidz', width: 30 }
       ]
 
       // Header styling
@@ -225,7 +247,8 @@ export default function DataSantriPage() {
         kelas: kelasList[0]?.nama || 'Kelas Abu Bakar',
         pengajar: pengajarList[0]?.nama || 'Ustaz Fulan',
         status: 'aktif',
-        materi_ujian: 'Al-Baqarah 1-10'
+        materi_ujian: 'Al-Baqarah 1-10',
+        materi_ujian_tahfidz: 'Juz 30'
       })
 
       // Prepare dropdown lists
@@ -305,6 +328,7 @@ export default function DataSantriPage() {
           const pengajar = row['Pengajar / Musyrif'] || row.pengajar
           const status = row['Status'] || row.status || 'aktif'
           const materiUjian = row['Materi Ujian Bacaan'] || row['Materi Ujian'] || row.materi_ujian || null
+          const materiUjianTahfidz = row['Materi Ujian Tahfidz'] || row.materi_ujian_tahfidz || null
 
           // Find class ID if provided
           let assignedKelasId = null
@@ -328,7 +352,8 @@ export default function DataSantriPage() {
             pengajar_id: assignedPengajarId,
             tanggal_masuk: new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0],
             status: status.toString().toLowerCase(),
-            materi_ujian: materiUjian ? materiUjian.toString() : null
+            materi_ujian: materiUjian ? materiUjian.toString() : null,
+            materi_ujian_tahfidz: materiUjianTahfidz ? materiUjianTahfidz.toString() : null
           }
 
           const { error } = await supabase.from('santri').insert([payload])
@@ -439,6 +464,88 @@ export default function DataSantriPage() {
     reader.readAsBinaryString(file)
   }
 
+  // --- LOGIKA EXCEL UNTUK TAHFIDZ ---
+  const handleDownloadTemplateMateriTahfidz = async () => {
+    try {
+      const ExcelJS = (await import('exceljs')).default
+      const { saveAs } = (await import('file-saver')).default || await import('file-saver')
+
+      const workbook = new ExcelJS.Workbook()
+      const worksheet = workbook.addWorksheet('Materi Tahfidz')
+
+      worksheet.columns = [
+        { header: 'ID (JANGAN DIUBAH)', key: 'id', width: 10 },
+        { header: 'NIS', key: 'nis', width: 15 },
+        { header: 'Nama Lengkap', key: 'nama', width: 30 },
+        { header: 'Materi Ujian Tahfidz', key: 'materi_ujian_tahfidz', width: 30 },
+      ]
+
+      worksheet.getRow(1).font = { bold: true }
+      worksheet.getColumn('A').hidden = true // Sembunyikan ID agar tidak diubah user
+
+      // Mengurutkan berdasarkan Kelas lalu Nama
+      const sortedSantri = [...santriList].sort((a, b) => {
+        const kelasCompare = (a.kelas?.nama || '').localeCompare(b.kelas?.nama || '')
+        if (kelasCompare !== 0) return kelasCompare
+        return (a.nama || '').localeCompare(b.nama || '')
+      })
+
+      sortedSantri.forEach(s => {
+        worksheet.addRow({
+          id: s.id,
+          nis: s.nis || s.kode_santri,
+          nama: s.nama,
+          materi_ujian_tahfidz: s.materi_ujian_tahfidz || ''
+        })
+      })
+
+      const buffer = await workbook.xlsx.writeBuffer()
+      saveAs(new Blob([buffer]), `Template_Materi_Tahfidz_${new Date().getTime()}.xlsx`)
+    } catch (error) {
+      console.error('Error generating template:', error)
+      alert('Gagal membuat template excel materi tahfidz.')
+    }
+  }
+
+  const handleUploadMateriTahfidz = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploadingMateriTahfidz(true)
+    try {
+      const data = await file.arrayBuffer()
+      const workbook = XLSX.read(data)
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]]
+      const jsonData = XLSX.utils.sheet_to_json<any>(worksheet)
+
+      let updatedCount = 0
+      for (const row of jsonData) {
+        const id = row['ID (JANGAN DIUBAH)'] || row.id
+        if (!id) continue
+
+        const materi = row['Materi Ujian Tahfidz'] !== undefined ? (row['Materi Ujian Tahfidz'] !== null ? String(row['Materi Ujian Tahfidz']) : null) : undefined
+        if (materi !== undefined) {
+          const { error } = await supabase
+            .from('santri')
+            .update({ materi_ujian_tahfidz: materi })
+            .eq('id', id)
+          
+          if (!error) updatedCount++
+        }
+      }
+
+      alert(`Berhasil memperbarui ${updatedCount} data materi ujian tahfidz.`)
+      fetchData()
+    } catch (error) {
+      console.error(error)
+      alert('Gagal memproses file excel.')
+    } finally {
+      setIsUploadingMateriTahfidz(false)
+      if (fileInputMateriTahfidzRef.current) fileInputMateriTahfidzRef.current.value = ''
+    }
+  }
+  // --- SELESAI LOGIKA TAHFIDZ ---
+
   const filteredSantri = [...santriList]
     .filter(s => 
       s.nama.toLowerCase().includes(search.toLowerCase()) ||
@@ -531,6 +638,87 @@ export default function DataSantriPage() {
             >
               {isUploadingMateri ? <Loader2 size={16} className="animate-spin" /> : <FileUp size={16} />}
               <span>Input Masal Materi Ujian Bacaan</span>
+            </button>
+          </div>
+
+          {/* Kelompok Fitur Update Massal Materi Tahfidz */}
+          <div className="flex flex-wrap gap-2 justify-end">
+            <button 
+              onClick={handleDownloadTemplateMateriTahfidz}
+              className="bg-purple-50 border border-purple-200 hover:bg-purple-100 text-purple-700 px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors text-sm"
+            >
+              <Download size={16} />
+              <span>Form Materi Ujian Tahfidz</span>
+            </button>
+            
+            <input 
+              type="file" 
+              accept=".xlsx, .xls" 
+              className="hidden" 
+              ref={fileInputMateriTahfidzRef} 
+              onChange={handleUploadMateriTahfidz}
+            />
+            <button 
+              onClick={() => fileInputMateriTahfidzRef.current?.click()}
+              disabled={isUploadingMateriTahfidz}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors disabled:opacity-50 text-sm"
+            >
+              {isUploadingMateriTahfidz ? <Loader2 size={16} className="animate-spin" /> : <FileUp size={16} />}
+              <span>Input Masal Materi Ujian Tahfidz</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Panel Distribusi Ujian Tahfidz */}
+      <div className="bg-white rounded-2xl shadow-sm border border-amber-100 overflow-hidden">
+        <div className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h3 className="font-bold text-gray-800 flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full bg-amber-500 inline-block"></span>
+              Distribusi Ujian Tahfidz
+            </h3>
+            <p className="text-xs text-gray-500 mt-1">
+              Acak pembagian siswa ke penguji. Siswa ABK (Siti Aisyah) dibagi rata. Penguji tidak menguji siswanya sendiri.
+            </p>
+          </div>
+          <div className="flex gap-3 flex-shrink-0">
+            <button
+              onClick={async () => {
+                if (!confirm('Jalankan distribusi acak ujian Tahfidz sekarang? Distribusi yang ada sebelumnya akan ditimpa.')) return
+                setIsDistributing(true)
+                const res = await distribusiUjianTahfidzAction()
+                setIsDistributing(false)
+                if (res.error) {
+                  alert('Gagal: ' + res.error)
+                } else {
+                  const ringkasan = res.ringkasan?.map((r: any) => `${r.nama}: ${r.jumlah} siswa`).join('\n') || ''
+                  alert('✅ Distribusi berhasil!\n\n' + ringkasan)
+                }
+              }}
+              disabled={isDistributing}
+              className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors disabled:opacity-50 text-sm"
+            >
+              {isDistributing ? <Loader2 size={16} className="animate-spin" /> : <Users size={16} />}
+              <span>{isDistributing ? 'Mengacak...' : 'Acak Distribusi Ujian Tahfidz'}</span>
+            </button>
+            <button
+              onClick={async () => {
+                if (!confirm('Reset semua distribusi ujian Tahfidz? Semua penugasan penguji akan dihapus.')) return
+                setIsResetting(true)
+                const res = await resetDistribusiUjianTahfidzAction()
+                setIsResetting(false)
+                if (res.error) {
+                  alert('Gagal: ' + res.error)
+                } else {
+                  alert('✅ Distribusi berhasil direset!')
+                }
+              }}
+              disabled={isResetting}
+              className="bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors disabled:opacity-50 text-sm border border-red-200"
+            >
+              {isResetting ? <Loader2 size={16} className="animate-spin" /> : <RotateCcw size={16} />}
+              <span>{isResetting ? 'Mereset...' : 'Reset Distribusi'}</span>
             </button>
           </div>
         </div>
@@ -652,6 +840,13 @@ export default function DataSantriPage() {
                         onClick={() => handleResetUjianBacaan(santri.id, santri.nama)}
                         className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors inline-flex"
                         title="Reset Status Ujian Bacaan"
+                      >
+                        <RotateCcw size={18} />
+                      </button>
+                      <button 
+                        onClick={() => handleResetUjianTahfidz(santri.id, santri.nama)}
+                        className="p-2 text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors inline-flex"
+                        title="Reset Status Ujian Tahfidz"
                       >
                         <RotateCcw size={18} />
                       </button>
