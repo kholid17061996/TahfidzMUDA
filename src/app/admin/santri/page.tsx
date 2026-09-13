@@ -35,7 +35,7 @@ export default function DataSantriPage() {
   const [loading, setLoading] = useState(true)
   const [isUploading, setIsUploading] = useState(false)
   const [search, setSearch] = useState('')
-  const [sortBy, setSortBy] = useState('urut')
+  const [sortBy, setSortBy] = useState('kelas')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const fileInputMateriRef = useRef<HTMLInputElement>(null)
@@ -354,7 +354,14 @@ export default function DataSantriPage() {
       worksheet.getRow(1).font = { bold: true }
       worksheet.getColumn('A').hidden = true // Sembunyikan ID agar tidak diubah user
 
-      santriList.forEach(s => {
+      // Mengurutkan berdasarkan Kelas lalu Nama
+      const sortedSantri = [...santriList].sort((a, b) => {
+        const kelasCompare = (a.kelas?.nama || '').localeCompare(b.kelas?.nama || '')
+        if (kelasCompare !== 0) return kelasCompare
+        return (a.nama || '').localeCompare(b.nama || '')
+      })
+
+      sortedSantri.forEach(s => {
         worksheet.addRow({
           id: s.id,
           nis: s.nis || s.kode_santri,
@@ -432,6 +439,9 @@ export default function DataSantriPage() {
         comparison = a.nama.localeCompare(b.nama)
       } else if (sortBy === 'kelas') {
         comparison = (a.kelas?.nama || '').localeCompare(b.kelas?.nama || '')
+        if (comparison === 0) {
+          comparison = (a.nama || '').localeCompare(b.nama || '')
+        }
       } else if (sortBy === 'pengajar') {
         comparison = (a.pengajar?.nama || '').localeCompare(b.pengajar?.nama || '')
       } else if (sortBy === 'urut') {
@@ -490,7 +500,7 @@ export default function DataSantriPage() {
               className="bg-blue-50 border border-blue-200 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors text-sm"
             >
               <Download size={16} />
-              <span>Unduh Data Materi Siswa</span>
+              <span>Form Materi Ujian Bacaan</span>
             </button>
             
             <input 
@@ -506,7 +516,7 @@ export default function DataSantriPage() {
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors disabled:opacity-50 text-sm"
             >
               {isUploadingMateri ? <Loader2 size={16} className="animate-spin" /> : <FileUp size={16} />}
-              <span>Update Massal Materi</span>
+              <span>Input Masal Materi Ujian Bacaan</span>
             </button>
           </div>
         </div>
