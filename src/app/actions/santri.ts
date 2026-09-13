@@ -178,6 +178,7 @@ export async function getAllSantriForPengujiAction() {
         .from('santri')
         .select('id, nama, kelas_id, kelas(nama), materi_ujian')
         .eq('status', 'aktif')
+        .eq('can_ujian_bacaan', true)
         .order('nama', { ascending: true }),
       supabaseAdmin
         .from('kelas')
@@ -200,6 +201,39 @@ export async function getAllSantriForPengujiAction() {
         kelas: resKelas.data
       } 
     }
+  } catch (err: any) {
+    return { error: 'Terjadi kesalahan sistem.' }
+  }
+}
+
+export async function allowRetestBacaanAction(santriId: string) {
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!serviceRoleKey) {
+    return { error: 'Kunci konfigurasi SUPABASE_SERVICE_ROLE_KEY belum disetel.' }
+  }
+
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    serviceRoleKey,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  )
+
+  try {
+    const { error } = await supabaseAdmin
+      .from('santri')
+      .update({ can_ujian_bacaan: true })
+      .eq('id', santriId)
+
+    if (error) {
+      return { error: 'Gagal mengizinkan ulang ujian: ' + error.message }
+    }
+
+    return { success: true }
   } catch (err: any) {
     return { error: 'Terjadi kesalahan sistem.' }
   }

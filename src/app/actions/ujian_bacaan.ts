@@ -39,13 +39,24 @@ export type UjianBacaanPayload = {
 export async function createUjianBacaanAction(payload: UjianBacaanPayload) {
   const supabaseAdmin = getAdminClient()
   try {
-    const { data, error } = await supabaseAdmin
-      .from('ujian_bacaan')
-      .insert(payload)
-      
-    if (error) return { error: error.message }
-    return { success: true }
-  } catch (err: any) {
+      const { data, error } = await supabaseAdmin
+        .from('ujian_bacaan')
+        .insert(payload)
+        
+      if (error) return { error: error.message }
+
+      // Update santri agar tidak muncul lagi di form ujian bacaan
+      const { error: updateError } = await supabaseAdmin
+        .from('santri')
+        .update({ can_ujian_bacaan: false })
+        .eq('id', payload.santri_id)
+
+      if (updateError) {
+        console.error('Gagal update status can_ujian_bacaan santri:', updateError)
+      }
+
+      return { success: true }
+    } catch (err: any) {
     return { error: err.message }
   }
 }

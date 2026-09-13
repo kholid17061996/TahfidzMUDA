@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/utils/supabase/client'
-import { Plus, Edit2, Trash2, Search, Loader2, Users, FileUp, Download, ArrowUpDown } from 'lucide-react'
+import { Plus, Edit2, Trash2, Search, Loader2, Users, FileUp, Download, ArrowUpDown, RotateCcw } from 'lucide-react'
 import * as XLSX from 'xlsx'
+
+import { allowRetestBacaanAction } from '@/app/actions/santri'
 
 // Types based on schema
 type Santri = {
@@ -179,6 +181,18 @@ export default function DataSantriPage() {
         fetchData()
       } else {
         alert('Gagal menghapus data: ' + error.message)
+      }
+    }
+  }
+
+  const handleResetUjianBacaan = async (id: string, namaSantri: string) => {
+    if (confirm(`Apakah Anda yakin ingin mereset ujian bacaan untuk ${namaSantri}? Siswa ini akan kembali muncul di daftar Penguji.`)) {
+      const res = await allowRetestBacaanAction(id)
+      if (res.error) {
+        alert(res.error)
+      } else {
+        alert('Berhasil direset! Siswa sekarang bisa diuji bacaan kembali.')
+        fetchData()
       }
     }
   }
@@ -633,6 +647,13 @@ export default function DataSantriPage() {
                         title="Hapus"
                       >
                         <Trash2 size={18} />
+                      </button>
+                      <button 
+                        onClick={() => handleResetUjianBacaan(santri.id, santri.nama)}
+                        className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors inline-flex"
+                        title="Reset Status Ujian Bacaan"
+                      >
+                        <RotateCcw size={18} />
                       </button>
                     </td>
                   </tr>
