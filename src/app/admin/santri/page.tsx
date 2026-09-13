@@ -38,7 +38,8 @@ export default function DataSantriPage() {
   const [sortBy, setSortBy] = useState('urut')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
   const fileInputRef = useRef<HTMLInputElement>(null)
-  
+  const fileInputMateriRef = useRef<HTMLInputElement>(null)
+  const [isUploadingMateri, setIsUploadingMateri] = useState(false)  
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -197,7 +198,7 @@ export default function DataSantriPage() {
         { header: 'Kelas', key: 'kelas', width: 20 },
         { header: 'Pengajar / Musyrif', key: 'pengajar', width: 25 },
         { header: 'Status', key: 'status', width: 15 },
-        { header: 'Materi Ujian', key: 'materi_ujian', width: 30 }
+        { header: 'Materi Ujian Bacaan', key: 'materi_ujian', width: 30 }
       ]
 
       // Header styling
@@ -289,7 +290,7 @@ export default function DataSantriPage() {
           const kelas = row['Kelas'] || row.kelas || row.nama_kelas
           const pengajar = row['Pengajar / Musyrif'] || row.pengajar
           const status = row['Status'] || row.status || 'aktif'
-          const materiUjian = row['Materi Ujian'] || row.materi_ujian || null
+          const materiUjian = row['Materi Ujian Bacaan'] || row['Materi Ujian'] || row.materi_ujian || null
 
           // Find class ID if provided
           let assignedKelasId = null
@@ -335,6 +336,88 @@ export default function DataSantriPage() {
     reader.readAsBinaryString(file)
   }
 
+  const handleDownloadTemplateMateri = async () => {
+    try {
+      const ExcelJS = (await import('exceljs')).default
+      const { saveAs } = (await import('file-saver')).default || await import('file-saver')
+
+      const workbook = new ExcelJS.Workbook()
+      const worksheet = workbook.addWorksheet('Update Materi')
+
+      worksheet.columns = [
+        { header: 'ID (JANGAN DIUBAH)', key: 'id', width: 10 },
+        { header: 'NIS / Kode', key: 'nis', width: 15 },
+        { header: 'Nama Siswa', key: 'nama', width: 25 },
+        { header: 'Materi Ujian Bacaan', key: 'materi_ujian', width: 40 }
+      ]
+      
+      worksheet.getRow(1).font = { bold: true }
+      worksheet.getColumn('A').hidden = true // Sembunyikan ID agar tidak diubah user
+
+      santriList.forEach(s => {
+        worksheet.addRow({
+          id: s.id,
+          nis: s.nis || s.kode_santri,
+          nama: s.nama,
+          materi_ujian: s.materi_ujian || ''
+        })
+      })
+
+      const buffer = await workbook.xlsx.writeBuffer()
+      saveAs(new Blob([buffer]), 'template_update_materi.xlsx')
+    } catch (error) {
+      console.error('Error generating template:', error)
+      alert('Gagal membuat template Excel.')
+    }
+  }
+
+  const handleUploadMateri = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploadingMateri(true)
+    const reader = new FileReader()
+    reader.onload = async (evt) => {
+      try {
+        const bstr = evt.target?.result
+        const wb = XLSX.read(bstr, { type: 'binary' })
+        const wsname = wb.SheetNames[0]
+        const ws = wb.Sheets[wsname]
+        const data = XLSX.utils.sheet_to_json(ws) as any[]
+
+        if (data.length === 0) {
+          alert('File Excel kosong atau format tidak sesuai.')
+          setIsUploadingMateri(false)
+          return
+        }
+
+        let successCount = 0
+        let errorCount = 0
+
+        for (const row of data) {
+          const id = row['ID (JANGAN DIUBAH)'] || row.id
+          const materiUjian = row['Materi Ujian Bacaan'] || row.materi_ujian || null
+          
+          if (!id) continue
+
+          const { error } = await supabase.from('santri').update({ materi_ujian: materiUjian ? materiUjian.toString() : null }).eq('id', id)
+          if (error) errorCount++
+          else successCount++
+        }
+
+        alert(`Update Materi Selesai! Berhasil: ${successCount}, Gagal: ${errorCount}`)
+        fetchData()
+      } catch (err) {
+        console.error(err)
+        alert('Terjadi kesalahan saat membaca file Excel.')
+      } finally {
+        setIsUploadingMateri(false)
+        if (fileInputMateriRef.current) fileInputMateriRef.current.value = ''
+      }
+    }
+    reader.readAsBinaryString(file)
+  }
+
   const filteredSantri = [...santriList]
     .filter(s => 
       s.nama.toLowerCase().includes(search.toLowerCase()) ||
@@ -364,38 +447,68 @@ export default function DataSantriPage() {
           <h1 className="text-2xl font-bold text-gray-900">Data Siswa</h1>
           <p className="text-gray-500 mt-1">Kelola data siswa, penempatan kelas, dan pengajarnya.</p>
         </div>
-        <div className="flex flex-wrap gap-2 w-full lg:w-auto">
-          <button 
-            onClick={handleDownloadTemplate}
-            className="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"
-          >
-            <Download size={18} className="text-gray-500" />
-            <span className="hidden sm:inline">Unduh Template</span>
-          </button>
-          
-          <input 
-            type="file" 
-            accept=".xlsx, .xls" 
-            className="hidden" 
-            ref={fileInputRef} 
-            onChange={handleFileUpload}
-          />
-          <button 
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors disabled:opacity-50"
-          >
-            {isUploading ? <Loader2 size={18} className="animate-spin" /> : <FileUp size={18} />}
-            <span className="hidden sm:inline">Import Excel</span>
-          </button>
-          
-          <button 
-            onClick={() => handleOpenModal()}
-            className="bg-slate hover:bg-slateHover text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"
-          >
-            <Plus size={18} />
-            <span className="hidden sm:inline">Tambah Siswa</span>
-          </button>
+        <div className="flex flex-col gap-3 w-full lg:w-auto">
+          {/* Kelompok Fitur Tambah Siswa Baru */}
+          <div className="flex flex-wrap gap-2 justify-end">
+            <button 
+              onClick={handleDownloadTemplate}
+              className="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors text-sm"
+            >
+              <Download size={16} className="text-gray-500" />
+              <span>Template Siswa Baru</span>
+            </button>
+            
+            <input 
+              type="file" 
+              accept=".xlsx, .xls" 
+              className="hidden" 
+              ref={fileInputRef} 
+              onChange={handleFileUpload}
+            />
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors disabled:opacity-50 text-sm"
+            >
+              {isUploading ? <Loader2 size={16} className="animate-spin" /> : <FileUp size={16} />}
+              <span>Import Siswa Baru</span>
+            </button>
+            
+            <button 
+              onClick={() => handleOpenModal()}
+              className="bg-slate hover:bg-slateHover text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors text-sm"
+            >
+              <Plus size={16} />
+              <span>Tambah Siswa</span>
+            </button>
+          </div>
+
+          {/* Kelompok Fitur Update Massal Materi */}
+          <div className="flex flex-wrap gap-2 justify-end">
+            <button 
+              onClick={handleDownloadTemplateMateri}
+              className="bg-blue-50 border border-blue-200 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors text-sm"
+            >
+              <Download size={16} />
+              <span>Unduh Data Materi Siswa</span>
+            </button>
+            
+            <input 
+              type="file" 
+              accept=".xlsx, .xls" 
+              className="hidden" 
+              ref={fileInputMateriRef} 
+              onChange={handleUploadMateri}
+            />
+            <button 
+              onClick={() => fileInputMateriRef.current?.click()}
+              disabled={isUploadingMateri}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors disabled:opacity-50 text-sm"
+            >
+              {isUploadingMateri ? <Loader2 size={16} className="animate-spin" /> : <FileUp size={16} />}
+              <span>Update Massal Materi</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -522,9 +635,9 @@ export default function DataSantriPage() {
 
       {/* Modal Tambah/Edit */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-10">
           <div className="absolute inset-0 bg-gray-900/50 backdrop-blur-sm overflow-y-auto pt-20 pb-10" onClick={handleCloseModal}></div>
-          <div className="bg-white rounded-2xl w-full max-w-2xl relative z-10 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-auto">
+          <div className="bg-white rounded-2xl w-full max-w-2xl relative z-10 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 mt-4 sm:mt-10">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50 sticky top-0 z-20">
               <h2 className="text-xl font-bold text-gray-900">
                 {editId ? 'Edit Data Siswa' : 'Pendaftaran Siswa Baru'}
@@ -624,7 +737,7 @@ export default function DataSantriPage() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Materi Ujian (Opsional)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Materi Ujian Bacaan (Opsional)</label>
                   <input 
                     type="text" 
                     value={materiUjian}
